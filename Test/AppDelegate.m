@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#define IS_OS_8_OR_LATER ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
 
 @interface AppDelegate ()
 
@@ -17,9 +18,52 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    
+ //   view = [[Common getStoryBoard] instantiateViewControllerWithIdentifier:@"Login_ViewController"];
+    //    UINavigationController *frontNavigationController = [[UINavigationController alloc] initWithRootViewController:view];
+    //    self.window.rootViewController = frontNavigationController;
+    //    [self.window makeKeyAndVisible];
+    
+    locationManager = [[CLLocationManager alloc] init];
+    locationManager.delegate=self;
+    locationManager.desiredAccuracy=kCLLocationAccuracyBest;
+    locationManager.distanceFilter=kCLDistanceFilterNone;
+    if(IS_OS_8_OR_LATER)
+        [locationManager requestWhenInUseAuthorization];
+    [locationManager startMonitoringSignificantLocationChanges];
+    [locationManager startUpdatingLocation];
+    
+    
+    if(IS_OS_8_OR_LATER)
+    {
+        NSUInteger code = [CLLocationManager authorizationStatus];
+        if (code == kCLAuthorizationStatusNotDetermined && ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)] || [locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]))
+        {
+            // choose one request according to your business.
+            if([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationAlwaysUsageDescription"])
+            {
+                [locationManager requestAlwaysAuthorization];
+            } else if([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationWhenInUseUsageDescription"]) {
+                [locationManager  requestWhenInUseAuthorization];
+            }
+            else
+            {
+                NSLog(@"Info.plist does not contain NSLocationAlwaysUsageDescription or NSLocationWhenInUseUsageDescription");
+            }
+        }
+    }
     return YES;
 }
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    NSLog(@"didFailWithError: %@", error);
+    //[[Utility toast:@"Failed to Get Your Location"] show];
+}
 
+- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+{
+    
+}
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
